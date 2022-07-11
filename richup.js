@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Rich up auto click
-// @version      0.0.1
-// @description  Auto click your mouse in richup.io
+// @version      0.0.2
+// @description  Auto roll your dice in richup.io
 // @author       KunoiSayami
 // @namespace    https://github.com/KunoiSayami/
 // @match        https://richup.io/room/*
@@ -19,10 +19,10 @@ if (window.plugin.auto === undefined) {
 window.plugin.auto.status = false;
 window.plugin.auto.init = function () {
     //let classname = undefined;
-    console.debug('Calling init');
+    //console.debug('Calling init');
     let discord_button = document.getElementsByTagName('a')[0];
-    console.log(discord_button);
-    if (!discord_button.href.startsWith('https://discord')) {
+    //console.log(discord_button);
+    if (!discord_button.href.includes('discord')) {
         console.error('Init fail, can\'t find discord button');
         return;
     }
@@ -82,12 +82,10 @@ window.plugin.auto.auto_click = function() {
 
     // flag check goes here.
 
-    console.log('Enter function');
     for (let element of document.getElementsByTagName('button')) {
         //console.log(element.textContent);
         if (element.textContent !== undefined && window.plugin.auto.require_roll.some(text => element.textContent.includes(text))) {
             element.click();
-            console.log('clicked');
             break;
         }
     }
@@ -95,9 +93,9 @@ window.plugin.auto.auto_click = function() {
 }
 
 function lazy_load() {
-    console.log('Calling lazy load');
+    console.debug('Calling lazy load');
     //if (Array.from(document.getElementsByTagName('button')).some( element => {console.log(element); return element.textContent !== undefined && element.textContent === 'All rooms';})) {
-    if (document.getElementsByTagName('input').length === 0) {
+    if (!Array.from(document.getElementsByTagName('input')).some(element => element.placeholder !== undefined && element.placeholder === 'Say something...')) {
         setTimeout(lazy_load, 500);
         return;
     }
