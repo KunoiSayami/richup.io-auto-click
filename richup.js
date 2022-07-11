@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Rich up auto click
-// @version      0.0.2
+// @version      0.0.3
 // @description  Auto roll your dice in richup.io
 // @author       KunoiSayami
 // @namespace    https://github.com/KunoiSayami/
@@ -95,7 +95,7 @@ window.plugin.auto.auto_click = function() {
 function lazy_load() {
     console.debug('Calling lazy load');
     //if (Array.from(document.getElementsByTagName('button')).some( element => {console.log(element); return element.textContent !== undefined && element.textContent === 'All rooms';})) {
-    if (!Array.from(document.getElementsByTagName('input')).some(element => element.placeholder !== undefined && element.placeholder === 'Say something...')) {
+    if (!Array.from(document.getElementsByTagName('input')).some(element => element.readOnly && element.value !== undefined && element.value.startsWith("https://richup.io/room"))) {
         setTimeout(lazy_load, 500);
         return;
     }
