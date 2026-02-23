@@ -1,0 +1,167 @@
+// ==UserScript==
+// @name         Rich up smart auto V1.4
+// @version      1.4.0
+// @description  Smart auto play for richup.io
+// @author       Babatimilehin
+// @namespace    https://github.com/Babatimilehin
+// @match        https://richup.io/room/*
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
+if (!window.plugin) window.plugin = {};
+if (!window.plugin.auto) window.plugin.auto = {};
+
+window.plugin.auto.status = false;
+window.plugin.auto.safetyBuffer = 500;
+
+window.plugin.auto.init = function () {
+
+    let discord_button = document.getElementsByTagName('a')[0];
+
+    if (!discord_button || !discord_button.href.includes('discord')) {
+        console.error("Init failed: Discord button not found");
+        return;
+    }
+
+    discord_button.removeAttribute('href');
+    discord_button.children[0].children[0].setAttribute('fill', 'red');
+
+    discord_button.addEventListener('click', () => {
+
+        if (window.plugin.auto.status) {
+            window.plugin.auto.status = false;
+            discord_button.children[0].children[0].setAttribute('fill', 'red');
+            console.log("Auto OFF");
+        } else {
+
+            if (!window.plugin.auto.check_game_started()) {
+                alert("Game not started!");
+                return;
+            }
+
+            window.plugin.auto.status = true;
+            discord_button.children[0].children[0].setAttribute('fill', 'green');
+            console.log("Auto ON");
+
+            window.plugin.auto.loop();
+        }
+    });
+};
+
+
+window.plugin.auto.loop = function () {
+    if (!window.plugin.auto.status) return;
+
+    window.plugin.auto.auto_click();
+
+    let delay = 600 + Math.random() * 200;
+    setTimeout(window.plugin.auto.loop, delay);
+};
+
+
+window.plugin.auto.get_money = function () {
+
+    let money = 0;
+    let elements = document.querySelectorAll("*");
+
+    for (let el of elements) {
+        if (el.childElementCount === 0 && el.textContent) {
+            let match = el.textContent.match(/^\$?(\d{2,5})$/);
+            if (match) {
+                let value = parseInt(match[1]);
+                if (value > money) {
+                    money = value;
+                }
+            }
+        }
+    }
+
+    return money;
+};
+
+
+window.plugin.auto.auto_click = function () {
+
+    let buttons = document.getElementsByTagName("button");
+    let currentMoney = window.plugin.auto.get_money();
+
+    for (let btn of buttons) {
+        if (!btn.textContent) continue;
+        if (btn.textContent.toLowerCase().includes("get free for")) {
+            let priceMatch = btn.textContent.match(/\$(\d+)/);
+            let price = priceMatch ? parseInt(priceMatch[1]) : 0;
+            if (currentMoney - price > window.plugin.auto.safetyBuffer) {
+                console.log("Paying $" + price + " to get out of jail");
+                btn.click();
+                return;
+            } else {
+                console.log("Can't afford jail buyout ($" + price + "), riding it out");
+                break;
+            }
+        }
+    }
+
+    for (let btn of buttons) {
+        if (!btn.textContent) continue;
+        let text = btn.textContent;
+        if (text.includes("Buy")) {
+            let priceMatch = text.match(/\$(\d+)/);
+            let price = priceMatch ? parseInt(priceMatch[1]) : 0;
+            let pageText = document.body.innerText.toLowerCase();
+            let isAirport = pageText.includes("airport");
+            if (isAirport) {
+                console.log("Buying airport");
+                btn.click();
+                return;
+            }
+            if ((currentMoney - price) > window.plugin.auto.safetyBuffer) {
+                console.log("Buying safely");
+                btn.click();
+                return;
+            } else {
+                console.log("Skipping purchase (not enough cash)");
+                break;
+            }
+        }
+    }
+
+
+    for (let btn of buttons) {
+        if (!btn.textContent) continue;
+        if (
+            btn.textContent.includes("Roll again") ||
+            btn.textContent.includes("Roll the dice") ||
+            btn.textContent.includes("End turn")
+        ) {
+            btn.click();
+            return;
+        }
+    }
+};
+
+
+window.plugin.auto.check_game_started = function () {
+
+    for (let element of document.getElementsByTagName("button")) {
+        if (element.textContent === "Change color") {
+            return false;
+        }
+    }
+
+    return true;
+};
+
+
+function lazy_load() {
+
+    if (!Array.from(document.getElementsByTagName('input'))
+        .some(el => el.readOnly && el.value && el.value.startsWith("https://richup.io/room"))) {
+        setTimeout(lazy_load, 500);
+        return;
+    }
+
+    window.plugin.auto.init();
+}
+
+setTimeout(lazy_load, 3000);
